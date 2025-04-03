@@ -1,0 +1,35 @@
+services:
+  backend:
+    build: .
+    container_name: hihand-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    env_file:
+      - internal/configs/dev/.env
+    restart: unless-stopped
+    networks:
+      - app_network
+
+  db:
+    image: postgres:17-alpine
+    container_name: hihand-db
+    restart: always
+    environment:
+      POSTGRES_USER: mthuwhihand
+      POSTGRES_PASSWORD: mthuwhihand
+      POSTGRES_DB: hihand
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+volumes:
+  pgdata:
+
+networks:
+  app_network:
+    driver: bridge
