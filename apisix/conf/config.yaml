@@ -1,0 +1,21 @@
+apisix:
+  enable_admin: false
+
+deployment:
+  role: data_plane
+  role_data_plane:
+    config_provider: yaml
+
+plugin:
+  go:
+    enable: true
+    path_for_test: ""
+    socket: "unix:/usr/local/apisix/conf/apisix-1.sock"
+    cmd: ["/usr/local/apisix/go-plugins/go-runner", "run"]
+
+plugin_attr:
+  kafka-producer:
+    broker_list:
+      - "kafka:29092"
+    producer_config:
+      acks: "1"

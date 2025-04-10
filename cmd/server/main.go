@@ -17,14 +17,28 @@ var (
 // @host localhost:8080
 // @BasePath /
 func main() {
-	_, cfgErr := config.Instance()
+	config, cfgErr := config.Instance()
 	if cfgErr != nil {
 		logger.Println("Can not get config:", cfgErr)
 	}
+
+	// Khởi tạo Kafka Producer và Consumer
+	broker := config.BROKER
+	topic := config.TOPIC_ORDER
+	groupID := "order_consumer_group"
+	responseTopic := config.TOPIC_ORDER_CREATED
+
+	producer, kafkaConsumer, err := router.StartOrderKafkaConsumer(broker, topic, groupID, responseTopic)
+	if err != nil {
+		log.Fatalf("Error initializing Kafka: %v", err)
+	}
+	defer producer.Close()
+	defer kafkaConsumer.Close()
 
 	app := router.NewRouter()
 
 	app.Run(":8080")
 
 	logger.Println("App Running!")
+
 }

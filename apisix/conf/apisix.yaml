@@ -1,0 +1,35 @@
+routes:
+  - id: orders_route
+    uri: /orders
+    status: 1
+    plugins:
+      ext-plugin-pre-req:
+        conf:
+          - name: kafka-producer
+            value: '{"broker":"kafka:29092","topic":"orders"}'
+    upstream:
+      type: roundrobin
+      nodes:
+        "172.17.0.1:8080": 1
+
+  - id: "2"
+    uri: "/hello-world"
+    upstream:
+      type: roundrobin
+      nodes:
+        "172.17.0.1:8080": 1
+
+consumers: []
+
+plugin_configs: []
+
+consumer_groups: []
+
+secrets: []
+
+plugin: []
+
+plugin_metadata: []
+
+protos: []
+#END

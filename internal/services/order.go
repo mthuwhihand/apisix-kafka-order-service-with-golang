@@ -7,6 +7,7 @@ import (
 
 type (
 	OrderService interface {
+		Search(query string, limit int, skip int) ([]*models.Order, error)
 		Create(order *models.Order) error
 		Update(id string, updates map[string]interface{}) error
 		Delete(orderID string) error
@@ -32,4 +33,8 @@ func (s *orderService) Update(id string, updates map[string]interface{}) error {
 }
 func (s *orderService) Delete(id string) error {
 	return s.repo.Delete(id)
+}
+
+func (s *orderService) Search(query string, limit int, skip int) ([]*models.Order, error) {
+	return s.repo.Search(query, limit, skip)
 }

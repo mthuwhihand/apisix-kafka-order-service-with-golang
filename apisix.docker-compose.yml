@@ -1,0 +1,37 @@
+services:
+  apisix:
+    image: apache/apisix
+    container_name: apisix
+    ports:
+      - "9080:9080"  # Port nhận request từ client
+      - "9180:9180"  # Admin API của APISIX
+    depends_on:
+      - go-plugin-runner
+    environment:
+      - APISIX_GO_PLUGIN_RUNNER_SOCKET=/usr/local/apisix/conf/apisix-1.sock
+      - APISIX_CONFIG_PATH=/usr/local/apisix/conf/config.yaml
+      - APISIX_STAND_ALONE=true
+    volumes:
+      - ./apisix/conf/config.yaml:/usr/local/apisix/conf/config.yaml
+      - ./apisix/conf/apisix.yaml:/usr/local/apisix/conf/apisix.yaml
+      - runner-socket:/usr/local/apisix/conf
+    networks:
+      - app_network
+  go-plugin-runner:
+    build:
+      context: ./go-plugins
+    container_name: go-plugin-runner
+    environment:
+      - APISIX_LISTEN_ADDRESS=unix:/usr/local/apisix/conf/apisix-1.sock
+    volumes:
+      - ./go-plugin-runner-config.yaml:/usr/local/apisix/go-plugins/config.yaml
+      - runner-socket:/usr/local/apisix/conf
+    networks:
+      - app_network
+
+volumes:
+  runner-socket:
+  
+networks:
+  app_network:
+    driver: bridge

@@ -1,0 +1,6 @@
+main:
+  socket: "unix:/tmp/runner.sock"
+
+plugins:
+  - name: kafka-producer
+    path: /go-plugins/kafka-producer.so

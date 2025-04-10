@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"hihand/internal/models"
 
 	"gorm.io/gorm"
@@ -8,6 +9,7 @@ import (
 
 type (
 	OrderRepository interface {
+		Search(query string, limit int, skip int) ([]*models.Order, error)
 		Create(order *models.Order) error
 		Update(id string, updates map[string]interface{}) error
 		Delete(orderID string) error
@@ -33,5 +35,38 @@ func (o *orderRepository) Update(id string, updates map[string]interface{}) erro
 }
 
 func (o *orderRepository) Delete(id string) error {
-	return o.db.Delete(&models.Order{}, id).Error
+	if id == "" {
+		return errors.New("invalid order ID")
+	}
+
+	result := o.db.Where("id = ?", id).Delete(&models.Order{})
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New("order not found or already deleted")
+	}
+
+	return nil
+}
+
+func (o *orderRepository) Search(query string, limit int, skip int) ([]*models.Order, error) {
+	var orders []*models.Order
+
+	tx := o.db.Model(&models.Order{}).Preload("Details")
+
+	if query != "" {
+		tx = tx.Where("recipient_name LIKE ? OR email LIKE ? OR contact_phone LIKE ?", "%"+query+"%", "%"+query+"%", "%"+query+"%")
+	}
+
+	if limit > 0 {
+		tx = tx.Limit(limit)
+	}
+	if skip > 0 {
+		tx = tx.Offset(skip)
+	}
+
+	err := tx.Find(&orders).Error
+	return orders, err
 }

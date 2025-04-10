@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"hihand/internal/models"
 	"hihand/internal/services"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -44,20 +44,25 @@ func (c *OrderController) HelloWorld(ctx *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /orders [post]
 func (c *OrderController) CreateOrder(ctx *gin.Context) {
-	var order models.Order
-	if err := ctx.ShouldBindJSON(&order); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+	// var order models.Order
+	// if err := ctx.ShouldBindJSON(&order); err != nil {
+	// 	ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// 	return
+	// }
 
-	err := c.service.Create(&order)
-	if err != nil {
-		logger.Println("Failed to create order:", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order"})
-		return
-	}
+	// err := c.service.Create(&order)
+	// if err != nil {
+	// 	logger.Println("Failed to create order:", err)
+	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order"})
+	// 	return
+	// }
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "Order created successfully", "order": order})
+	// ctx.JSON(http.StatusOK, gin.H{"message": "Order created successfully", "order": order})
+
+	ctx.JSON(200, map[string]string{
+		"message": "Message pushed to Kafka",
+	})
+	ctx.Abort()
 }
 
 // UpdateOrder godoc
@@ -100,11 +105,33 @@ func (c *OrderController) UpdateOrder(ctx *gin.Context) {
 // @Router /orders/{id} [delete]
 func (c *OrderController) DeleteOrder(ctx *gin.Context) {
 	orderID := ctx.Param("id")
+	if orderID == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Order ID is required"})
+		return
+	}
+
 	err := c.service.Delete(orderID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete order"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete order: " + err.Error()})
 		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "Order deleted successfully"})
+}
+
+func (c *OrderController) SearchOrders(ctx *gin.Context) {
+	query := ctx.Query("query")
+	limit := ctx.DefaultQuery("limit", "10")
+	skip := ctx.DefaultQuery("skip", "0")
+
+	limitInt, _ := strconv.Atoi(limit)
+	skipInt, _ := strconv.Atoi(skip)
+
+	orders, err := c.service.Search(query, limitInt, skipInt)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search orders"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"orders": orders})
 }

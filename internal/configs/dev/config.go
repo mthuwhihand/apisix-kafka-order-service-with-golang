@@ -14,9 +14,17 @@ var (
 	logger   = log.New(log.Writer(), "[configs/dev/config.go] ", log.LstdFlags|log.Lshortfile)
 )
 
+const (
+	KafkaBrokers = "kafka:9092"   // Địa chỉ Kafka Broker
+	OrderTopic   = "order-events" // Tên topic để publish order events
+)
+
 type Config struct {
-	DB_URL    string
-	SecretKey string
+	DB_URL              string
+	SecretKey           string
+	BROKER              string
+	TOPIC_ORDER         string
+	TOPIC_ORDER_CREATED string
 }
 
 func Instance() (*Config, error) {
@@ -37,8 +45,11 @@ func Instance() (*Config, error) {
 		}
 
 		instance = &Config{
-			DB_URL:    os.Getenv("DB_URL"),
-			SecretKey: os.Getenv("SECRET_KEY"),
+			DB_URL:              os.Getenv("DB_URL"),
+			SecretKey:           os.Getenv("SECRET_KEY"),
+			BROKER:              os.Getenv("BROKER"),
+			TOPIC_ORDER:         os.Getenv("TOPIC_ORDER"),
+			TOPIC_ORDER_CREATED: os.Getenv("TOPIC_ORDER_CREATED"),
 		}
 	})
 
