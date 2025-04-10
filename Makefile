@@ -17,8 +17,8 @@ tidy:
 #2/ Run docker compose up --build
 #docker compose -f docker-compose.yml up --build
 #docker compose -f kafka.docker-compose.yml up --build
+#make run-server
 #docker compose -f apisix.docker-compose.yml up --build
-#3/ make run-server
 
 #Check logs:
 #docker exec -it kafka /usr/bin/kafka-topics --bootstrap-server localhost:9092 --list

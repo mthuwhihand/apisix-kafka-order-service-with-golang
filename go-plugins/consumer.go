@@ -29,8 +29,14 @@ func consumeCreatedOrders(broker, topic string) {
 	for {
 		msg, err := c.ReadMessage(-1)
 		if err == nil {
-			log.Infof("Received message from %s: %s", topic, string(msg.Value))
-			sseManager.Broadcast(string(msg.Value))
+			clientID := string(msg.Key)
+			if clientID == "" {
+				log.Warnf("Message key (clientID) is empty for message: %s", string(msg.Value))
+				continue
+			}
+
+			log.Infof("Sending to clientID %s: %s", clientID, string(msg.Value))
+			sseManager.SendToClient(clientID, string(msg.Value))
 		} else {
 			log.Errorf("Consumer error: %v (%v)", err, msg)
 		}

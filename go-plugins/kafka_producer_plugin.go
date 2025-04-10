@@ -16,8 +16,12 @@ import (
 
 // KafkaProducerPlugin là plugin để produce message vào Kafka.
 type KafkaProducerPlugin struct {
-	Broker string `json:"broker"` // Kafka broker (ví dụ: "kafka:9092")
-	Topic  string `json:"topic"`  // Topic để gửi message (ví dụ: "orders")
+	Broker string `json:"broker"`
+	Topic  string `json:"topic"`
+}
+
+type RequestPayload struct {
+	ClientID string `json:"clientID"`
 }
 
 func (kp *KafkaProducerPlugin) Name() string {
@@ -31,6 +35,7 @@ func (kp *KafkaProducerPlugin) ParseConf(conf []byte) (interface{}, error) {
 
 func (kp *KafkaProducerPlugin) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP.Request) {
 	log.Infof("KafkaProducerPlugin triggered")
+
 	body, err := r.Body()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -42,6 +47,21 @@ func (kp *KafkaProducerPlugin) RequestFilter(conf interface{}, w http.ResponseWr
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Empty body"))
 		log.Infof("Received request with empty body")
+		return
+	}
+
+	var payload RequestPayload
+	if err := json.Unmarshal(body, &payload); err != nil {
+		log.Errorf("Failed to parse JSON body: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid JSON body"))
+		return
+	}
+
+	if payload.ClientID == "" {
+		log.Errorf("Missing clientID in request body")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Missing clientID in request body"))
 		return
 	}
 
@@ -60,7 +80,7 @@ func (kp *KafkaProducerPlugin) RequestFilter(conf interface{}, w http.ResponseWr
 
 	err = producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &kp.Topic, Partition: kafka.PartitionAny},
-		Key:            []byte("order"),
+		Key:            []byte(payload.ClientID),
 		Value:          body,
 	}, deliveryChan)
 
@@ -100,9 +120,8 @@ func (kp *KafkaProducerPlugin) ResponseFilter(conf interface{}, w pkgHTTP.Respon
 func runPlugin() {
 	listenAddress := os.Getenv("APISIX_LISTEN_ADDRESS")
 	if listenAddress == "" {
-		// Set mặc định nếu chưa được set
 		listenAddress = "unix:/tmp/runner.sock"
-		os.Setenv("APISIX_LISTEN_ADDRESS", listenAddress) // để runner.Run dùng được
+		os.Setenv("APISIX_LISTEN_ADDRESS", listenAddress)
 	}
 
 	log.Infof("Starting APISIX Go Plugin Runner on %s", listenAddress)

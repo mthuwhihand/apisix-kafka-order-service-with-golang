@@ -7,46 +7,53 @@ import (
 )
 
 type SSEManager struct {
-	clients map[chan string]bool
+	clients map[string]chan string // clientId -> channel
 	mu      sync.Mutex
 }
 
 func NewSSEManager() *SSEManager {
 	return &SSEManager{
-		clients: make(map[chan string]bool),
+		clients: make(map[string]chan string),
 	}
 }
 
-func (s *SSEManager) AddClient(ch chan string) {
+func (s *SSEManager) AddClient(clientID string, ch chan string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.clients[ch] = true
+	s.clients[clientID] = ch
 }
 
-func (s *SSEManager) RemoveClient(ch chan string) {
+func (s *SSEManager) RemoveClient(clientID string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	delete(s.clients, ch)
-	close(ch)
+	if ch, ok := s.clients[clientID]; ok {
+		close(ch)
+		delete(s.clients, clientID)
+	}
 }
 
-func (s *SSEManager) Broadcast(message string) {
+func (s *SSEManager) SendToClient(clientID string, message string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	for ch := range s.clients {
+	if ch, ok := s.clients[clientID]; ok {
 		ch <- message
 	}
 }
 
 func (s *SSEManager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Headers để giữ kết nối SSE
+	clientID := r.URL.Query().Get("clientId")
+	if clientID == "" {
+		http.Error(w, "Missing clientId", http.StatusBadRequest)
+		return
+	}
+
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 
 	messageChan := make(chan string)
-	s.AddClient(messageChan)
-	defer s.RemoveClient(messageChan)
+	s.AddClient(clientID, messageChan)
+	defer s.RemoveClient(clientID)
 
 	notify := w.(http.CloseNotifier).CloseNotify()
 
