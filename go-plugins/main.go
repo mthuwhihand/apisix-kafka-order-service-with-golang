@@ -1,23 +1,20 @@
 package main
 
 import (
-	"net/http"
+	"os"
 
 	"github.com/apache/apisix-go-plugin-runner/pkg/log"
 )
 
 func main() {
-	startSSEServer()
-	go consumeCreatedOrders("kafka:29092", "created_orders")
-	runPlugin()
-}
+	listenAddress := os.Getenv("APISIX_LISTEN_ADDRESS")
+	if listenAddress == "" {
+		listenAddress = "unix:/tmp/runner.sock"
+		os.Setenv("APISIX_LISTEN_ADDRESS", listenAddress)
+	}
 
-func startSSEServer() {
-	http.Handle("/events", sseManager) // path để client connect nhận message
-	go func() {
-		log.Infof("SSE server running on :8081")
-		if err := http.ListenAndServe(":8081", nil); err != nil {
-			log.Errorf("SSE server error: %v", err)
-		}
-	}()
+	runKafkaProducerPlugin()
+
+	log.Infof("Starting APISIX Go Plugin Runner on %s", listenAddress)
+
 }

@@ -1,5 +1,6 @@
 apisix:
   enable_admin: false
+  allow_websocket: true
 
 deployment:
   role: data_plane

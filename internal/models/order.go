@@ -116,3 +116,10 @@ func (o *Order) BeforeCreate(tx *gorm.DB) (err error) {
 	o.Status = order_statuses.Created
 	return
 }
+
+func (od *OrderDetail) BeforeCreate(tx *gorm.DB) (err error) {
+	if od.ID == "" {
+		od.ID = uuid.New().String()
+	}
+	return nil
+}

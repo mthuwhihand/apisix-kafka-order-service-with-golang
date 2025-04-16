@@ -24,16 +24,16 @@ type RequestPayload struct {
 	ClientID string `json:"clientID"`
 }
 
-func (kp *KafkaProducerPlugin) Name() string {
+func (pg *KafkaProducerPlugin) Name() string {
 	return "kafka-producer"
 }
 
-func (kp *KafkaProducerPlugin) ParseConf(conf []byte) (interface{}, error) {
-	err := json.Unmarshal(conf, kp)
-	return kp, err
+func (pg *KafkaProducerPlugin) ParseConf(conf []byte) (interface{}, error) {
+	err := json.Unmarshal(conf, pg)
+	return pg, err
 }
 
-func (kp *KafkaProducerPlugin) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP.Request) {
+func (pg *KafkaProducerPlugin) RequestFilter(conf interface{}, w http.ResponseWriter, r pkgHTTP.Request) {
 	log.Infof("KafkaProducerPlugin triggered")
 
 	body, err := r.Body()
@@ -49,6 +49,10 @@ func (kp *KafkaProducerPlugin) RequestFilter(conf interface{}, w http.ResponseWr
 		log.Infof("Received request with empty body")
 		return
 	}
+	// Thiết lập header SSE
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
 
 	var payload RequestPayload
 	if err := json.Unmarshal(body, &payload); err != nil {
@@ -66,7 +70,7 @@ func (kp *KafkaProducerPlugin) RequestFilter(conf interface{}, w http.ResponseWr
 	}
 
 	producer, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": kp.Broker,
+		"bootstrap.servers": pg.Broker,
 	})
 	if err != nil {
 		log.Errorf("Failed to create producer: %v", err)
@@ -79,7 +83,7 @@ func (kp *KafkaProducerPlugin) RequestFilter(conf interface{}, w http.ResponseWr
 	deliveryChan := make(chan kafka.Event, 1)
 
 	err = producer.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &kp.Topic, Partition: kafka.PartitionAny},
+		TopicPartition: kafka.TopicPartition{Topic: &pg.Topic, Partition: kafka.PartitionAny},
 		Key:            []byte(payload.ClientID),
 		Value:          body,
 	}, deliveryChan)
@@ -113,24 +117,14 @@ func (kp *KafkaProducerPlugin) RequestFilter(conf interface{}, w http.ResponseWr
 	close(deliveryChan)
 }
 
-func (kp *KafkaProducerPlugin) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
-	// Không xử lý response.
+func (pg *KafkaProducerPlugin) ResponseFilter(conf interface{}, w pkgHTTP.Response) {
+	// This func will be called when backend service return response
+	// before forward to client
 }
 
-func runPlugin() {
-	listenAddress := os.Getenv("APISIX_LISTEN_ADDRESS")
-	if listenAddress == "" {
-		listenAddress = "unix:/tmp/runner.sock"
-		os.Setenv("APISIX_LISTEN_ADDRESS", listenAddress)
-	}
-
-	log.Infof("Starting APISIX Go Plugin Runner on %s", listenAddress)
-
-	if err := plugin.RegisterPlugin(&KafkaProducerPlugin{
-		Broker: "kafka:29092",
-		Topic:  "orders",
-	}); err != nil {
-		log.Errorf("Error registering plugin: %v", err)
+func runKafkaProducerPlugin() {
+	if err := plugin.RegisterPlugin(&KafkaProducerPlugin{}); err != nil {
+		log.Errorf("Error registering KafkaProducerPlugin: %v", err)
 		return
 	}
 

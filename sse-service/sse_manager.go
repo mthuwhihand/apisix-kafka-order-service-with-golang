@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+
+	"github.com/gin-gonic/gin"
 )
 
 type SSEManager struct {
-	clients map[string]chan string // clientId -> channel
+	clients map[string]chan string
 	mu      sync.Mutex
 }
 
@@ -40,30 +42,28 @@ func (s *SSEManager) SendToClient(clientID string, message string) {
 	}
 }
 
-func (s *SSEManager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	clientID := r.URL.Query().Get("clientId")
+func (s *SSEManager) HandleOrderCreatedResponseSSE(c *gin.Context) {
+	clientID := c.Query("clientId")
 	if clientID == "" {
-		http.Error(w, "Missing clientId", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing clientId"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
 
 	messageChan := make(chan string)
 	s.AddClient(clientID, messageChan)
 	defer s.RemoveClient(clientID)
 
-	notify := w.(http.CloseNotifier).CloseNotify()
+	notify := c.Request.Context().Done()
 
 	for {
 		select {
 		case msg := <-messageChan:
-			fmt.Fprintf(w, "data: %s\n\n", msg)
-			if f, ok := w.(http.Flusher); ok {
-				f.Flush()
-			}
+			fmt.Fprintf(c.Writer, "data: %s\n\n", msg)
+			c.Writer.Flush()
 		case <-notify:
 			return
 		}

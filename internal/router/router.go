@@ -73,7 +73,7 @@ func StartOrderKafkaConsumer(broker, topic, groupID, responseTopic string) (*pro
 		return nil, nil, err
 	}
 
-	processMessage := func(msg *kafka.Message) (string, error) {
+	processMessage := func(msg *kafka.Message) ([]byte, error) {
 		logger.Printf("Processing message: %s\n", string(msg.Value))
 
 		var order models.Order
@@ -81,15 +81,20 @@ func StartOrderKafkaConsumer(broker, topic, groupID, responseTopic string) (*pro
 		err := json.Unmarshal(msg.Value, &order)
 		if err != nil {
 			logger.Printf("Failed to parse message: %v\n", err)
-			return "", fmt.Errorf("failed to parse message: %v", err)
+			return nil, fmt.Errorf("failed to parse message: %v", err)
 		}
 
 		err = service.Create(&order)
 		if err != nil {
-			return "", fmt.Errorf("failed to create order: %v", err)
+			return nil, fmt.Errorf("failed to create order: %v", err)
 		}
 
-		return order.ID, nil
+		jsonBytes, err := json.Marshal(order)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal value to JSON: %v", err)
+		}
+		
+		return jsonBytes, nil
 	}
 
 	kafkaConsumer, err := consumer.NewKafkaConsumer(broker, topic, groupID, responseTopic, producer, processMessage)

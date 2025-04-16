@@ -1,0 +1,128 @@
+h1 {
+    color: #2c3e50;
+    font-size: 24px;
+}
+
+ul {
+    padding-left: 20px;
+}
+
+li {
+    margin-bottom: 8px;
+}
+
+#Home {
+    background-color: azure;
+}
+
+a {
+    text-decoration: none;
+    color: aliceblue;
+}
+
+a:hover {
+    color: #2c3e50;
+}
+
+.list-item {
+    margin-left: 4rem;
+}
+
+.list-item h1,
+li {
+    color: white;
+
+}
+
+.create-order-form input,
+textarea {
+    background-color: aliceblue;
+    border: none;
+    /* width: 100%; */
+    font-size: 1.2rem;
+    color: black;
+    margin: 0.4em auto;
+    padding: 0.6em;
+}
+
+.create-order-form input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: brightness(0) saturate(100%) !important;
+    opacity: 1;
+}
+
+.create-order-form {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+.order {
+    flex: 1;
+    max-width: 50rem;
+}
+
+.order_details {
+    flex: 1;
+    /* max-width: 40rem; */
+}
+
+.order input,
+.order textarea {
+    display: block;
+    margin-bottom: 10px;
+    width: 100%;
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+
+.order_details input,
+.order_details textarea {
+    margin-bottom: 10px;
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.order_details>div {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.order_details button {
+    padding: 6px 12px;
+    font-size: 14px;
+    border: none;
+    background-color: #28a745;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.order_details button:hover {
+    background-color: #218838;
+}
+
+.product-detail-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.detail-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-field label {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #000;
+}

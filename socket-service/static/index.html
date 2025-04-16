@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Socket.IO Client</title>
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"
+    integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+"
+    crossorigin="anonymous"></script>
+</head>
+
+<body>
+  <h2>Socket.IO Client</h2>
+  <div id="data-container"></div>
+
+  <script>
+    // Lấy clientId từ query param: ?clientId=client1
+    const params = new URLSearchParams(window.location.search);
+    const clientId = params.get("clientId") || "defaultClient";
+
+    const socket = io("http://localhost:9080", {
+      path: "/socket",
+      transports: ["websocket"]
+    });
+
+    socket.on("connect", () => {
+      console.log("Connected!", socket.id);
+      socket.emit("register", clientId);
+    });
+
+    socket.on("order_created", (data) => {
+      console.log("Received:", data);
+
+      const container = document.getElementById("data-container");
+      const pre = document.createElement("pre");
+      pre.innerText = "Order created:\n" + JSON.stringify(data, null, 2);
+      container.appendChild(pre);
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("Disconnected:", reason);
+    });
+  </script>
+</body>
+
+</html>

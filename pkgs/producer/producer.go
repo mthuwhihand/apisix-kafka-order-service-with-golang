@@ -3,6 +3,7 @@ package producer
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
@@ -50,11 +51,33 @@ func (kp *KafkaProducer) handleEvents() {
 	}
 }
 
-func (kp *KafkaProducer) SendMessage(key, value string) error {
+// func (kp *KafkaProducer) SendMessage(key string, value string) error {
+// 	return kp.Producer.Produce(&kafka.Message{
+// 		TopicPartition: kafka.TopicPartition{Topic: &kp.Topic, Partition: kafka.PartitionAny},
+// 		Key:            []byte(key),
+// 		Value:          []byte(value),
+// 	}, nil)
+// }
+
+func (kp *KafkaProducer) SendMessage(key string, status_code int, message string, value []byte) error {
 	return kp.Producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &kp.Topic, Partition: kafka.PartitionAny},
 		Key:            []byte(key),
-		Value:          []byte(value),
+		Value:          value,
+		Headers: []kafka.Header{
+			{
+				Key:   "status_code",
+				Value: []byte(strconv.Itoa(status_code)),
+			},
+			{
+				Key:   "message",
+				Value: []byte(message),
+			},
+			{
+				Key:   "source",
+				Value: []byte("apisix-plugin"),
+			},
+		},
 	}, nil)
 }
 

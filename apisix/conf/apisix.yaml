@@ -1,8 +1,13 @@
 routes:
   - id: orders_route
     uri: /orders
+    methods: ["POST"]
     status: 1
     plugins:
+      cors:
+        allow_origins: "*"
+        allow_methods: "*"
+        allow_headers: "*"
       ext-plugin-pre-req:
         conf:
           - name: kafka-producer
@@ -11,9 +16,53 @@ routes:
       type: roundrobin
       nodes:
         "172.17.0.1:8080": 1
+  - id: "3"
+    uri: "/orders"
+    methods: ["GET"]
+    plugins:
+      cors: {}
+    upstream:
+      type: roundrobin
+      nodes:
+        "172.17.0.1:8080": 1
+  - id: orders_options_route
+    uri: /orders
+    methods: ["OPTIONS"]
+    plugins:
+      cors:
+        allow_origins: "*"
+        allow_methods: "*"
+        allow_headers: "*"
+    upstream:
+      type: roundrobin
+      nodes:
+        "172.17.0.1:8080": 1
+  - id: sse_events
+    uri: /events/order_created
+    status: 1
+    plugins:
+      cors: {}
+    upstream:
+      type: roundrobin
+      nodes:
+        "172.17.0.1:8083": 1
+  - id: socket_events
+    uris:
+      - /socket
+      - /socket/*
+    enable_websocket: true
+    status: 1
+    plugins:
+      cors: {}
+    upstream:
+      type: roundrobin
+      nodes:
+        "172.17.0.1:8082": 1
 
   - id: "2"
     uri: "/hello-world"
+    plugins:
+      cors: {}
     upstream:
       type: roundrobin
       nodes:

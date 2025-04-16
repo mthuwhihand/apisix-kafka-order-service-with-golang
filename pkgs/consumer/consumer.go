@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hihand/pkgs/producer"
 	"log"
+	"net/http"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
@@ -17,10 +18,10 @@ type KafkaConsumer struct {
 	Producer         *producer.KafkaProducer // Producer là tùy chọn
 	Topic            string
 	ResponseTopic    string                                   // ResponseTopic là tùy chọn
-	ProcessMessageFn func(msg *kafka.Message) (string, error) // Callback function xử lý message
+	ProcessMessageFn func(msg *kafka.Message) ([]byte, error) // Callback function xử lý message
 }
 
-func NewKafkaConsumer(broker, topic, groupID, responseTopic string, producer *producer.KafkaProducer, processMessageFn func(msg *kafka.Message) (string, error)) (*KafkaConsumer, error) {
+func NewKafkaConsumer(broker, topic, groupID, responseTopic string, producer *producer.KafkaProducer, processMessageFn func(msg *kafka.Message) ([]byte, error)) (*KafkaConsumer, error) {
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": broker,
 		"sasl.mechanisms":   "PLAIN",
@@ -59,15 +60,19 @@ func (kc *KafkaConsumer) handleEvents() {
 			result, err := kc.ProcessMessageFn(msg)
 			if err != nil {
 				logger.Printf("Error processing message: %v\n", err)
-				continue
 			}
 
 			if kc.Producer != nil && kc.ResponseTopic != "" {
-				err = kc.Producer.SendMessage(string(msg.Key), result)
+				if err != nil {
+					err = kc.Producer.SendMessage(string(msg.Key), http.StatusBadRequest, "Order failed", []byte(err.Error()))
+				} else {
+					err = kc.Producer.SendMessage(string(msg.Key), http.StatusOK, "Order successfully", result)
+				}
+
 				if err != nil {
 					logger.Printf("Failed to send message: %v\n", err)
 				} else {
-					logger.Printf("Successfully sent processed message back to topic %s\nResult: %s", kc.ResponseTopic, result)
+					logger.Printf("Successfully sent processed message back to topic %s\nMessage: %s", kc.ResponseTopic, result)
 				}
 			}
 		} else {
