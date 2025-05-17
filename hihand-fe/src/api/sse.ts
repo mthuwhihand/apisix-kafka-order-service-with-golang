@@ -1,12 +1,12 @@
+import { CLIENT_ID } from "../constants/config";
+
 // src/api/sse.ts
 export const connectSSE = (onMessage: (msg: any) => void): EventSource => {
-    const clientId = "client2";
-    const source = new EventSource('http://localhost:9080/events/order_created?clientId=' + clientId);
+    const source = new EventSource(`http://localhost:9080/events/order_created?clientId=${CLIENT_ID}`);
 
     source.onmessage = (event) => {
         const data = JSON.parse(event.data);
         console.log("Type of event.data, ", typeof (event.data))
-        // Kiểm tra status_code và xử lý dữ liệu theo tình huống
         if (data.status_code === '200') {
             console.log('Order created successfully:', data.value);
             onMessage({
@@ -23,6 +23,10 @@ export const connectSSE = (onMessage: (msg: any) => void): EventSource => {
             });
         }
     };
+
+    source.addEventListener("ping", (_) => {
+        console.log("Received ping at", new Date().toISOString());
+    });
 
     source.onerror = (err) => {
         console.log('SSE Error:', err);

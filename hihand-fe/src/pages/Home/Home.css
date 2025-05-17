@@ -95,18 +95,25 @@ textarea {
     padding-bottom: 10px;
 }
 
-.order_details button {
-    padding: 6px 12px;
-    font-size: 14px;
-    border: none;
-    background-color: #28a745;
+.order_details .add-prod-btn {
+    background-color: #2ac94f;
     color: white;
-    border-radius: 4px;
     cursor: pointer;
 }
 
-.order_details button:hover {
-    background-color: #218838;
+.order_details .add-prod-btn:hover {
+    background-color: #6ea179;
+}
+
+.order_details .delete-btn {
+    background-color: rgb(230, 86, 86);
+    color: white;
+    width: 100px;
+    cursor: pointer;
+}
+
+.order_details .delete-btn:hover {
+    background-color: rgb(250, 192, 192);
 }
 
 .product-detail-row {
@@ -125,4 +132,32 @@ textarea {
     font-weight: 600;
     margin-bottom: 4px;
     color: #000;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+    color: white;
+    padding: 6px 10px;
+    cursor: pointer;
+    margin-top: 1.5rem;
+}
+
+.delete-btn:hover {
+    background-color: #919191;
+    border-color: #eee;
+}
+
+.detail-field label {
+    color: white;
+}
+
+#create-order-btn {
+    background-color: rgb(153, 226, 226);
+    color: black;
+}
+
+#create-order-btn:hover {
+    background-color: rgb(122, 122, 122);
+    color: rgb(255, 255, 255);
+    border-color: #e7e7e7;
 }

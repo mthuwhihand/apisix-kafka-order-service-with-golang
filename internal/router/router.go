@@ -6,7 +6,6 @@ import (
 	"hihand/internal/controllers"
 	"hihand/internal/database"
 	"hihand/internal/models"
-	"hihand/internal/repositories"
 	"hihand/internal/services"
 	"hihand/pkgs/consumer"
 	"hihand/pkgs/producer"
@@ -42,8 +41,7 @@ func NewRouter() *gin.Engine {
 	// Middleware
 	r.Use(gin.Logger())   //Log request
 	r.Use(gin.Recovery()) //Catch panic or something like that, and return 500 Internal Server Error
-	repository := repositories.NewOrderRepository(db)
-	service := services.NewOrderService(repository)
+	service := services.NewOrderService(db)
 	controller := controllers.NewOrderController(service)
 
 	api := r.Group("/orders")
@@ -64,8 +62,7 @@ func StartOrderKafkaConsumer(broker, topic, groupID, responseTopic string) (*pro
 	if err != nil {
 		logger.Println("Get Database Instance failed! Error:", err)
 	}
-	repository := repositories.NewOrderRepository(db)
-	service := services.NewOrderService(repository)
+	service := services.NewOrderService(db)
 
 	producer, err := producer.NewKafkaProducer(broker, responseTopic)
 	if err != nil {
@@ -93,7 +90,7 @@ func StartOrderKafkaConsumer(broker, topic, groupID, responseTopic string) (*pro
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal value to JSON: %v", err)
 		}
-		
+
 		return jsonBytes, nil
 	}
 

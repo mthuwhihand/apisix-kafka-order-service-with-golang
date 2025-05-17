@@ -1,15 +1,42 @@
 import http from './http';
-import { Order } from '../types/Order';
+import { Order, OrderRequest } from '../types/Order';
+import { CLIENT_ID } from '../constants/config';
+import { HttpStatusCode } from 'axios';
 
-export const fetchItems = async (): Promise<Order[]> => {
-    const res = await http.get('/orders');
-    return res.data.orders;
+interface FetchOrdersResponse {
+    orders: Order[];
+    totalCount: number;
+    currentPage: number;
+    totalPages: number;
+    hasNext: boolean;
+}
+
+export const fetchItems = async (
+    page: number,
+    pageSize: number
+): Promise<FetchOrdersResponse> => {
+    const skip = (page - 1) * pageSize;
+    const limit = pageSize;
+
+    const res = await http.get('/orders', {
+        params: { skip, limit }
+    });
+
+    const data = res.data.data;
+
+    return {
+        orders: data.data,
+        totalCount: data.total_records,
+        currentPage: data.current_page,
+        totalPages: data.total_pages,
+        hasNext: data.has_next,
+    };
 };
 
-export const createOrder = async (order: Order): Promise<string> => {
+export const createOrder = async (order: OrderRequest): Promise<string> => {
     try {
         const orderData = {
-            clientID: "client2",
+            clientID: CLIENT_ID,
             user_id: order.user_id,
             recipient_name: order.recipient_name,
             contact_phone: order.contact_phone,
@@ -32,3 +59,10 @@ export const createOrder = async (order: Order): Promise<string> => {
     }
 };
 
+export const deleteOrder = async (orderId: string): Promise<string> => {
+    const res = await http.delete(`/orders/${orderId}`);
+    if (res.status != HttpStatusCode.Ok) {
+        throw new Error(res.data?.message || 'Xóa đơn hàng thất bại!');
+    }
+    return res.data?.message || 'Order created successfully!';
+};

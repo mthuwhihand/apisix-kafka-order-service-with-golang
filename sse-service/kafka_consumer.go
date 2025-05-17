@@ -51,8 +51,6 @@ func RegisterNewConsumer(broker, topic, group string) {
 			}
 
 			// Prepare the message object
-			// kafkaValueString := string(msg.Value) // Convert byte slice to string
-
 			// If the Kafka value is in JSON format, unmarshal it to a map
 			var value map[string]interface{}
 			err := json.Unmarshal(msg.Value, &value)
@@ -61,11 +59,10 @@ func RegisterNewConsumer(broker, topic, group string) {
 				continue
 			}
 
-			// Now, you have the key-value pairs inside the 'value' map
 			kafkaMsg := KafkaMessage{
 				StatusCode: statusCode,
 				Message:    message,
-				Value:      value, // Assuming msg.Value is the data you want to send
+				Value:      value,
 			}
 
 			// Convert the message to JSON
@@ -75,10 +72,8 @@ func RegisterNewConsumer(broker, topic, group string) {
 				continue
 			}
 
-			// Log and send to client
 			log.Printf("Sending to client %s: %s", clientID, string(kafkaMsgJSON))
 
-			// Send to the client with the JSON message
 			sseManager.SendToClient(clientID, string(kafkaMsgJSON))
 		} else {
 			log.Printf("Consumer error: %v", err)

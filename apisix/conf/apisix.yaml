@@ -1,4 +1,16 @@
 routes:
+  - id: orders_options
+    uri: /orders
+    methods: ["OPTIONS"]
+    plugins:
+      cors:
+        allow_origins: "*"
+        allow_methods: "*"
+        allow_headers: "*"
+    upstream:
+      type: roundrobin
+      nodes:
+        "172.17.0.1:8080": 1
   - id: orders_route
     uri: /orders
     methods: ["POST"]
@@ -20,14 +32,29 @@ routes:
     uri: "/orders"
     methods: ["GET"]
     plugins:
-      cors: {}
+      cors:
+        allow_origins: "*"
+        allow_methods: "*"
+        allow_headers: "*"
     upstream:
       type: roundrobin
       nodes:
         "172.17.0.1:8080": 1
-  - id: orders_options_route
-    uri: /orders
-    methods: ["OPTIONS"]
+  - id: "4"
+    uri: "/orders/*"
+    methods: ["DELETE"]
+    plugins:
+      cors:
+        allow_origins: "*"
+        allow_methods: "*"
+        allow_headers: "*"
+    upstream:
+      type: roundrobin
+      nodes:
+        "172.17.0.1:8080": 1
+  - id: orders_get_by_id
+    uri: /orders/*
+    methods: ["GET", "OPTIONS"]
     plugins:
       cors:
         allow_origins: "*"
@@ -46,6 +73,10 @@ routes:
       type: roundrobin
       nodes:
         "172.17.0.1:8083": 1
+      timeout:
+        connect: 60000 # ms
+        send: 60000 # ms
+        read: 3600000 # 1 giờ (SSE)
   - id: socket_events
     uris:
       - /socket

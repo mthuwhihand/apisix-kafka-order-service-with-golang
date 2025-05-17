@@ -1,40 +1,46 @@
 import { useEffect, useState } from 'react';
 import { connectSSE } from '../../api/sse';
-import { Order } from '../../types/Order';
-import { fetchItems, createOrder } from '../../api';
+import { Order, OrderRequest } from '../../types/Order';
+import { fetchItems, createOrder, deleteOrder } from '../../api';
 import './Home.css';
+
+const PAGE_SIZE = 10;
 
 const Home = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-    const [newOrder, setNewOrder] = useState<Order>({
-        id: '',
+
+    const [page, setPage] = useState<number>(1);
+    const [totalPages, setTotalPages] = useState<number>(1);
+
+    const [newOrder, setNewOrder] = useState<OrderRequest>({
         recipient_name: 'Nguyen Van C',
-        user_id: '12345',
+        user_id: 'bda3bf0a-c788-493b-96a0-ef4aced61eda',
         contact_phone: '0123456789',
         email: 'nguyenvana@example.com',
         address: '123 Đường ABC, Quận 1, TP. HCM',
-        order_date: '',
         status: 'Created',
         total: 500000,
         note: '',
         details: [],
     });
 
-    useEffect(() => {
-        const getOrders = async () => {
-            try {
-                const fetchedOrders = await fetchItems();
-                setOrders(fetchedOrders);
-            } catch (error) {
-                console.error('Failed to fetch orders:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const getOrders = async (pageNumber: number) => {
+        setLoading(true);
+        try {
+            const res = await fetchItems(pageNumber, PAGE_SIZE);
+            setOrders(res.orders);
+            setTotalPages(res.totalPages);
+        } catch (error) {
+            console.error('Failed to fetch orders:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        getOrders();
-    }, []);
+    useEffect(() => {
+        getOrders(page);
+    }, [page]);
 
     useEffect(() => {
         if (!loading) {
@@ -62,13 +68,11 @@ const Home = () => {
 
             // Reset lại đơn hàng sau khi tạo
             setNewOrder({
-                id: '',
                 recipient_name: 'Nguyen Van C',
-                user_id: '12345',
+                user_id: 'bda3bf0a-c788-493b-96a0-ef4aced61eda',
                 contact_phone: '0123456789',
                 email: 'nguyenvana@example.com',
                 address: '123 Đường ABC, Quận 1, TP. HCM',
-                order_date: '',
                 status: 'Created',
                 total: 500000,
                 note: '',
@@ -78,6 +82,25 @@ const Home = () => {
             alert(error.message || 'Tạo đơn hàng thất bại!');
             console.error('Failed to create order:', error);
         }
+    };
+
+    const handleDeleteOrder = async (id: string) => {
+        const confirm = window.confirm('Bạn có chắc muốn xóa đơn hàng này không?');
+        if (!confirm) return;
+
+        try {
+            const message = await deleteOrder(id);
+            alert(message);
+            setOrders((prev) => prev.filter((order) => order.id !== id));
+        } catch (error: any) {
+            alert(error.message || 'Xóa đơn hàng thất bại!');
+        }
+    };
+
+    const handleRemoveProductDetail = (index: number) => {
+        const newDetails = [...newOrder.details];
+        newDetails.splice(index, 1); // Xóa phần tử ở vị trí index
+        setNewOrder((prevOrder) => ({ ...prevOrder, details: newDetails }));
     };
 
 
@@ -104,8 +127,8 @@ const Home = () => {
 
     const handleAddProductDetail = () => {
         const newProductDetail = {
-            id: '',
             name: 'Laptop 1',
+            user_id: newOrder.user_id,
             product_id: 'a1',
             quantity: 10,
             price: 0,
@@ -117,9 +140,18 @@ const Home = () => {
         }));
     };
 
+    // Hàm chuyển trang
+    const handlePrevPage = () => {
+        if (page > 1) setPage(page - 1);
+    };
+    const handleNextPage = () => {
+        if (page < totalPages) setPage(page + 1);
+    };
+
     if (loading) {
         return <div>Loading...</div>;
     }
+
 
     return (
         <div className="list-item">
@@ -243,13 +275,31 @@ const Home = () => {
                                     placeholder="Thành tiền"
                                 />
                             </div>
+                            {/* Nút XÓA */}
+                            <div className="detail-field">
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemoveProductDetail(index)}
+                                    className="delete-btn"
+                                >
+                                    🗑️ Xóa
+                                </button>
+                            </div>
                         </div>
                     ))}
 
-                    <button onClick={handleAddProductDetail}>+ Thêm sản phẩm</button>
+                    <button className='add-prod-btn' onClick={handleAddProductDetail}>+ Thêm sản phẩm</button>
                 </div>
             </div>
-            <button onClick={handleCreateOrder}>Tạo đơn hàng</button>
+            <button id='create-order-btn' onClick={handleCreateOrder}>Tạo đơn hàng</button>
+
+            {/* Nút phân trang */}
+            <div className="pagination">
+                <button onClick={handlePrevPage} disabled={page <= 1}>Trang trước</button>
+                <span>Trang {page} / {totalPages}</span>
+                <button onClick={handleNextPage} disabled={page >= totalPages}>Trang sau</button>
+            </div>
+
             <ul>
                 {orders.map((item) => (
                     <li key={item.id}>
@@ -267,6 +317,7 @@ const Home = () => {
                                 ))}
                             </ul>
                         )}
+                        <button onClick={() => handleDeleteOrder(item.id)} className="delete-btn">🗑️ Xóa đơn hàng</button>
                     </li>
                 ))}
             </ul>

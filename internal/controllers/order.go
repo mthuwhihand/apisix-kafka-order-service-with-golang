@@ -133,5 +133,5 @@ func (c *OrderController) SearchOrders(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"orders": orders})
+	ctx.JSON(http.StatusOK, gin.H{"data": orders})
 }
