@@ -17,8 +17,8 @@ services:
     container_name: hihand-db
     restart: always
     environment:
-      POSTGRES_USER: mthuwhihand
-      POSTGRES_PASSWORD: mthuwhihand
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
       POSTGRES_DB: hihand
     ports:
       - "5000:5432"

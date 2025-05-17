@@ -23,12 +23,12 @@ cd apisix-kafka-order-service-with-golang
 
 For start db
 ```bash
-docker-compose -f docker-compose.yml up
+docker compose -f docker-compose.yml up
 ```
 
 For start kafka
 ```bash
-docker-compose -f kafka.docker-compose.yml up
+docker compose -f kafka.docker-compose.yml up
 ```
 
 For start local Backend service
@@ -38,17 +38,17 @@ make run-server
 
 For start APISIX Api Gateway 
 ```bash
-docker-compose -f apisix.docker-compose.yml up
+docker compose -f apisix.docker-compose.yml up
 ```
 
 For start local SSE (Server Send Event) service
 ```bash
-cd sse-service & go run .
+cd sse-service && go run .
 ```
 
 For start FE
 ```bash
-cd hihand-fe & npm run dev
+cd hihand-fe && npm run dev
 ```
 
 
